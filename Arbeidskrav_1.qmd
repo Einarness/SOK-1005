@@ -1,0 +1,115 @@
+---
+title: "SOK1004, høst 2022, Mappeoppgave 2"
+author: "207 og 120"
+format: pdf
+echo: true
+output: true
+editor: visual
+warning: false
+---
+
+```{r}
+rm(list=ls())
+library(tidyverse)
+library(zoo)
+library(lubridate)
+```
+
+```{r, message = FALSE, warning=FALSE}
+#Downloading the four data series
+df_lower <- read_table2("https://www.nsstc.uah.edu/data/msu/v6.0/tlt/uahncdc_lt_6.0.txt")
+df_mid <- read_table2("http://vortex.nsstc.uah.edu/data/msu/v6.0/tmt/uahncdc_mt_6.0.txt")
+df_tropopause <- read_table2("http://vortex.nsstc.uah.edu/data/msu/v6.0/ttp/uahncdc_tp_6.0.txt")
+df_low_strato <- read_table2("http://vortex.nsstc.uah.edu/data/msu/v6.0/tls/uahncdc_ls_6.0.txt")
+```
+
+```{r, message = FALSE, warning = FALSE}
+#Selecting needed columns
+#Calculating 12-month(right-aligned) moving average
+df_lower <- df_lower%>% 
+  select(Year, Mo, Globe) %>% 
+  mutate(Date = ymd(paste(df_lower$Year, df_lower$Mo, 1, sep="-"))) %>% 
+  mutate(Year = year(Date), Month = month(Date)) %>%
+  select(Year, Month, Date, Globe) %>%  
+  mutate_if(is.character, ~as.numeric(.)) %>% 
+  filter(Year >= 1979) %>% 
+  mutate(Average.Temp_lower=rollmean(Globe, k=12, fill=NA, na.pad = FALSE, align="right")) %>%  
+  rename(Temp_lower=Globe)
+
+df_mid <- df_mid %>%
+  select(Year, Mo, Globe) %>% 
+  mutate(Date = ymd(paste(df_mid$Year, df_mid$Mo, 1, sep="-"))) %>% 
+  mutate(Year = year(Date), Month = month(Date)) %>%
+  select(Year, Month, Date, Globe) %>%  
+  mutate_if(is.character, ~as.numeric(.)) %>% 
+  filter(Year >= 1979) %>% 
+  mutate(Average.Temp_mid=rollmean(Globe, k=12, fill=NA, na.pad = FALSE, align="right")) %>% 
+  rename(Temp_mid=Globe)
+  
+df_tropopause <- df_tropopause %>%
+  select(Year, Mo, Globe) %>%
+  mutate(Date = ymd(paste(df_tropopause$Year, df_tropopause$Mo, 1, sep="-"))) %>% 
+  mutate(Year = year(Date), Month = month(Date)) %>%
+  select(Year, Month, Date, Globe) %>%  
+  mutate_if(is.character, ~as.numeric(.)) %>% 
+  filter(Year >= 1979) %>% 
+  mutate(Average.Temp_tropo=rollmean(Globe, k=12, fill=NA, na.pad = FALSE, align="right")) %>% 
+  rename(Temp_tropo=Globe)
+
+df_low_strato <- df_low_strato %>%
+  select(Year, Mo, Globe) %>%
+  mutate(Date = ymd(paste(df_low_strato$Year, df_low_strato$Mo, 1, sep="-"))) %>% 
+  mutate(Year = year(Date), Month = month(Date)) %>%
+  select(Year, Month, Date, Globe) %>%  
+  mutate_if(is.character, ~as.numeric(.)) %>% 
+  filter(Year >= 1979) %>% 
+  mutate(Average.Temp_lowstrato=rollmean(Globe, k=12, fill=NA, na.pad = FALSE, align="right")) %>% 
+  rename(Temp_low_strato=Globe)
+```
+
+```{r}
+#combining the four datasets to df_total
+df_total <- df_lower %>% 
+  select(Year, Date, Temp_lower, Average.Temp_lower)
+df_total <- cbind(df_total,df_mid$Temp_mid, df_tropopause$Temp_tropo,  df_low_strato$Temp_low_strato, df_mid$Average.Temp_mid,df_tropopause$Average.Temp_tropo,df_low_strato$Average.Temp_lowstrato)
+df_total <- df_total %>% 
+  rename(Temp_mid=`df_mid$Temp_mid`) %>%
+  rename(Temp_tropo=`df_tropopause$Temp_tropo`) %>%
+  rename(Temp_lowstrato=`df_low_strato$Temp_low_strato`) %>%
+  rename(Average.Temp_mid=`df_mid$Average.Temp_mid`) %>% 
+  rename(Average.Temp_tropo=`df_tropopause$Average.Temp_tropo`) %>%
+  rename(Average.Temp_lowstrato=`df_low_strato$Average.Temp_lowstrato`) %>% 
+  relocate("Average.Temp_lower", .after="Temp_lowstrato")
+```
+
+```{r}
+#Calculating the average of the four moving averages
+df_total <- df_total %>% 
+  filter(Year != 1979) %>% 
+  group_by(Year)
+df_total$Average <- rowMeans(df_total[7:10], )
+df_total <- df_total %>% 
+  select(-c(Temp_lower,Temp_mid,Temp_tropo,Temp_lowstrato)) %>% 
+  rename(Lower_Troposphere=`Average.Temp_lower`)%>%
+  rename(Mid_Troposphere=`Average.Temp_mid`) %>% 
+  rename(Tropopause=`Average.Temp_tropo`) %>% 
+  rename(Lower_Stratosphere=`Average.Temp_lowstrato`) %>% 
+  pivot_longer(3:6, names_to = "atmosfære", values_to = "temp_atmos")
+```
+
+```{r}
+#plot of the four-atmosphere locations and their Average 
+df_total %>% 
+  ggplot(aes(x=Date, y=temp_atmos, col=atmosfære))+
+  geom_line()+
+  geom_line(aes(y=Average), col="black", size=0.8, alpha=0.65)+
+  labs(x="Year", y="Global Temperature (deg. C)",
+       colour="12-month(right-aligned) 
+moving average",
+         title="Average temperature for the four atmosphere locations 
+and their average from 1980 until today")+
+  annotate("text", x = as.Date("2005-06-01"), y = 0.7, label = "Average of the four
+           12-month moving averages", color="black")+
+  annotate("segment", x = as.Date("2004-01-01"), xend = as.Date("2009-08-01"), y = 0.5, yend = 0.08, arrow = arrow(length = unit(0.4,"cm")))+
+  theme_bw()
+```
