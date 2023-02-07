@@ -8,7 +8,7 @@ editor: visual
 warning: false
 ---
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 rm(list=ls()) 
 library(tidyverse)
 library(zoo)
