@@ -9,7 +9,7 @@ warning: false
 ---
 
 ```{r}
-rm(list=ls())
+rm(list=ls()) 
 library(tidyverse)
 library(zoo)
 library(lubridate)
