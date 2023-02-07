@@ -24,6 +24,7 @@ df_low_strato <- read_table2("http://vortex.nsstc.uah.edu/data/msu/v6.0/tls/uahn
 ```
 
 ```{r, message = FALSE, warning = FALSE}
+
 #Selecting needed columns
 #Calculating 12-month(right-aligned) moving average
 df_lower <- df_lower%>% 
