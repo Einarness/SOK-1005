@@ -58,7 +58,8 @@ df_tropopause <- df_tropopause %>%
 
 df_low_strato <- df_low_strato %>%
   select(Year, Mo, Globe) %>%
-  mutate(Date = ymd(paste(df_low_strato$Year, df_low_strato$Mo, 1, sep="-"))) %>% 
+  mutate(Date = ymd(paste(df_low_strato$Year, 
+                          df_low_strato$Mo, 1, sep="-"))) %>% 
   mutate(Year = year(Date), Month = month(Date)) %>%
   select(Year, Month, Date, Globe) %>%  
   mutate_if(is.character, ~as.numeric(.)) %>% 
