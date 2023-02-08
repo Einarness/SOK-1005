@@ -99,7 +99,7 @@ df_total <- df_total %>%
   pivot_longer(3:6, names_to = "atmosfære", values_to = "temp_atmos")
 ```
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 #plot of the four-atmosphere locations and their Average 
 df_total %>% 
   ggplot(aes(x=Date, y=temp_atmos, col=atmosfære))+
