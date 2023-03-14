@@ -1,5 +1,5 @@
 ---
-title: "SOK-1005 Arbeidskrav 2"
+title: "SOK-1005 Arbeidskrav 3"
 author: "12"
 format: html
 echo: true
