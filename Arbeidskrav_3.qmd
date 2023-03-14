@@ -1,0 +1,107 @@
+---
+title: "SOK-1005 Arbeidskrav 2"
+author: "12"
+format: pdf
+echo: true
+output: true
+editor: visual
+warning: false
+---
+
+```{r, message=FALSE, warning=FALSE}
+rm(list=ls()) 
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(zoo)
+library("rvest")
+library(jsonlite)
+library(rjstat)
+library(ggrepel)
+```
+
+```{r}
+url <- "https://static01.nyt.com/newsgraphics/2021/12/20/us-coronavirus-deaths-2021/ff0adde21623e111d8ce103fedecf7ffc7906264/scatter.json"
+
+data <- fromJSON(url)
+
+df <- as_tibble(data)
+```
+
+```{r}
+df$names <- state.abb[match(df$name, state.name)]
+df[is.na(df)] <- "DC"
+df <- df %>% 
+  mutate(Share_of_total_vaccinated=fully_vaccinated_pct_of_pop*100)
+```
+
+```{r}
+df %>%
+  ggplot(aes(x = fully_vaccinated_pct_of_pop, y = deaths_per_100k)) +
+  geom_point(aes(col = names), size = 2, alpha=0.5, col="darkgreen") +
+  geom_text(aes(label = names, col = names), size = 3, alpha=0.7, col="black", nudge_y = 0.7, check_overlap = TRUE, fontface="bold") +
+    geom_text(aes(x = 0.54, y = 19, label = "Lower vaccination rate,
+        higher death rate"),hjust = 0, vjust = 1, size = 3, color = "black") +
+  geom_segment(aes(x = 0.57, y = 16, xend =0.53 , yend = 18),
+               arrow = arrow(length = unit(0.3, "cm")), color = "black")+
+  
+    geom_text(aes(x = 0.65, y = 13, label = "Higher vaccination rate, 
+        lower death rate"),hjust = 0, vjust = 1, size = 3, color = "black") +
+  geom_segment(aes(x = 0.70, y = 11, xend =0.73 , yend = 8),
+               arrow = arrow(length = unit(0.3, "cm")), color = "black")+
+    labs(title = "Covid-19 deaths since universal adult vaccine eligibility compared with 
+vaccination rates",
+       x = "Share of total population fully vaccinated",
+       y = "Avg. monthly deaths per 100,000") +
+  theme(text = element_text(size=10),
+        legend.position = "none",
+        plot.background = element_rect(fill = "white"), 
+        panel.background = element_rect(fill = 'white', color = 'black'),
+        panel.grid.major = element_line(color = 'black', linetype = 'dotted'))+
+  scale_x_continuous(labels = scales::percent,
+                     breaks = scales::pretty_breaks(n = 10))
+```
+
+```{r}
+lm(deaths_per_100k ~ Share_of_total_vaccinated, data=df)
+```
+
+The two values on the customized line in the code represent the slope and intercept of the linear regression line that was fitted using the lm() function.
+
+To interpret the two values, the slope indicates the change in the dependent variable (y-axis) for a one-unit increase in the independent variable (x-axis). In this case, the slope indicates how much the deaths per 100k would decrease for a one percent increase in the proportion of the population vaccinated. The intercept represents the value of the dependent variable when the independent variable is equal to zero. In this case, the intercept represents the deaths per 100k when there is no vaccination rate.
+
+The output shows the coefficients for the intercept and the Share_of_total_vaccinated variable. Specifically, the intercept is 31.1485, and the coefficient for Share_of_total_vaccinated is -0.3666.
+
+The negative coefficient indicates that there is a negative linear relationship between the number of deaths per 100,000 people and the proportion of the population vaccinated. As the proportion of the population vaccinated increases, the number of deaths per 100,000 people decreases.
+
+Therefore, we can conclude that there is a negative correlation between the number of deaths per 100,000 people and the proportion of the population vaccinated.
+
+```{r}
+df %>%
+  ggplot(aes(x = fully_vaccinated_pct_of_pop, y = deaths_per_100k)) +
+  geom_point(aes(col = names), size = 2, alpha=0.5, col="darkgreen") +
+  geom_smooth(method = lm, se = FALSE)+
+  geom_text(aes(label = names, col = names), size = 3,col="black", nudge_y = 0.5, check_overlap = TRUE, fontface="bold") +
+    geom_text(aes(x = 0.54, y = 19, label = "Lower vaccination rate,
+                  higher death rate"),hjust = 0, vjust = 1, size = 3, color = "black") +
+  geom_segment(aes(x = 0.57, y = 16, xend =0.53 , yend = 18),
+               arrow = arrow(length = unit(0.3, "cm")), color = "black")+
+  
+    geom_text(aes(x = 0.65, y = 13, label = "Higher vaccination rate, 
+                  lower death rate"),hjust = 0, vjust = 1, size = 3, color = "black") +
+  geom_segment(aes(x = 0.70, y = 11, xend =0.73 , yend = 8),
+               arrow = arrow(length = unit(0.3, "cm")), color = "black")+
+  
+  
+  labs(title = "Covid-19 deaths since universal adult vaccine eligibility compared with 
+vaccination rates",
+       x = "Share of total population fully vaccinated",
+       y = "Avg. monthly deaths per 100,000") +
+  theme(text = element_text(size=10),
+        legend.position = "none",
+        plot.background = element_rect(fill = "white"), 
+        panel.background = element_rect(fill = 'white', color = 'black'),
+        panel.grid.major = element_line(color = 'black', linetype = 'dotted'))+
+  scale_x_continuous(labels = scales::percent,
+                     breaks = scales::pretty_breaks(n = 10))
+```
