@@ -26,6 +26,7 @@ library(ggrepel)
 
 ```{r, message = FALSE, warning=FALSE}
 #Read the JSON data from the website to R
+
 url <- "https://static01.nyt.com/newsgraphics/2021/12/20/us-coronavirus-deaths-2021/ff0adde21623e111d8ce103fedecf7ffc7906264/scatter.json"
 
 #Making the dataframe
@@ -34,7 +35,9 @@ df <- as_tibble(data)
 ```
 
 ```{r, message = FALSE, warning=FALSE}
+
 #Making a shortcut for the names of the states
+
 df$names <- state.abb[match(df$name, state.name)]
 df[is.na(df)] <- "DC"
 df <- df %>% 
