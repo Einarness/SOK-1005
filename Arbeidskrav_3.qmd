@@ -1,15 +1,17 @@
 ---
 title: "SOK-1005 Arbeidskrav 2"
 author: "12"
-format: pdf
+format: html
 echo: true
 output: true
 editor: visual
 warning: false
 ---
 
+# Assignment 3: Reading json data from a web page
+
 ```{r, message=FALSE, warning=FALSE}
-rm(list=ls()) 
+rm(list=ls())
 library(tidyverse)
 library(janitor)
 library(lubridate)
@@ -20,22 +22,27 @@ library(rjstat)
 library(ggrepel)
 ```
 
-```{r}
+## Task 1
+
+```{r, message = FALSE, warning=FALSE}
+#Read the JSON data from the website to R
 url <- "https://static01.nyt.com/newsgraphics/2021/12/20/us-coronavirus-deaths-2021/ff0adde21623e111d8ce103fedecf7ffc7906264/scatter.json"
 
+#Making the dataframe
 data <- fromJSON(url)
-
 df <- as_tibble(data)
 ```
 
-```{r}
+```{r, message = FALSE, warning=FALSE}
+#Making a shortcut for the names of the states
 df$names <- state.abb[match(df$name, state.name)]
 df[is.na(df)] <- "DC"
 df <- df %>% 
   mutate(Share_of_total_vaccinated=fully_vaccinated_pct_of_pop*100)
 ```
 
-```{r}
+```{r, message = FALSE, warning=FALSE}
+#Plotting figure that replicates the figure from the website
 df %>%
   ggplot(aes(x = fully_vaccinated_pct_of_pop, y = deaths_per_100k)) +
   geom_point(aes(col = names), size = 2, alpha=0.5, col="darkgreen") +
@@ -62,7 +69,10 @@ vaccination rates",
                      breaks = scales::pretty_breaks(n = 10))
 ```
 
+## Task 2
+
 ```{r}
+#Using lm() function
 lm(deaths_per_100k ~ Share_of_total_vaccinated, data=df)
 ```
 
@@ -70,13 +80,14 @@ The two values on the customized line in the code represent the slope and interc
 
 To interpret the two values, the slope indicates the change in the dependent variable (y-axis) for a one-unit increase in the independent variable (x-axis). In this case, the slope indicates how much the deaths per 100k would decrease for a one percent increase in the proportion of the population vaccinated. The intercept represents the value of the dependent variable when the independent variable is equal to zero. In this case, the intercept represents the deaths per 100k when there is no vaccination rate.
 
-The output shows the coefficients for the intercept and the Share_of_total_vaccinated variable. Specifically, the intercept is 31.1485, and the coefficient for Share_of_total_vaccinated is -0.3666.
+The output shows the coefficients for the intercept and the Share_of_total_vaccinated variable. Specifically, the intercept is 31.1485, and the coefficient for Share_of_total_vaccinated is -0.3666 or -36.66%.
 
 The negative coefficient indicates that there is a negative linear relationship between the number of deaths per 100,000 people and the proportion of the population vaccinated. As the proportion of the population vaccinated increases, the number of deaths per 100,000 people decreases.
 
 Therefore, we can conclude that there is a negative correlation between the number of deaths per 100,000 people and the proportion of the population vaccinated.
 
-```{r}
+```{r, message = FALSE, warning=FALSE}
+#Plotting figure with the custom line
 df %>%
   ggplot(aes(x = fully_vaccinated_pct_of_pop, y = deaths_per_100k)) +
   geom_point(aes(col = names), size = 2, alpha=0.5, col="darkgreen") +
